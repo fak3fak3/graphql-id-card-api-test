@@ -74,6 +74,41 @@ describe('GraphQL: number of SQL queries (e2e)', () => {
     ]);
   });
 
+  it('loads two levels of nesting without N+1', async () => {
+    // Five places of work: without batching the achievements alone would
+    // take five queries. The cost must not depend on the number of rows.
+    const tables = await tablesQueried(
+      '{ profile { experience { company achievements { text } } } }',
+    );
+
+    expect(tables).toEqual(['profiles', 'experiences', 'achievements']);
+  });
+
+  it('serves the whole business card with one query per table', async () => {
+    const tables = await tablesQueried(`{
+      profile {
+        name
+        links { url }
+        skills { name }
+        experience { company position achievements { text } }
+      }
+    }`);
+
+    expect(tables.sort()).toEqual([
+      'achievements',
+      'experiences',
+      'profile_links',
+      'profiles',
+      'skills',
+    ]);
+  });
+
+  it('batches achievements for the root experiences query', async () => {
+    expect(
+      await tablesQueried('{ experiences { company achievements { text } } }'),
+    ).toEqual(['experiences', 'achievements']);
+  });
+
   it('serves the root skills query with a single query', async () => {
     expect(await tablesQueried('{ skills { name category } }')).toEqual([
       'skills',

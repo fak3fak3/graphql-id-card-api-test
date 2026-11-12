@@ -17,6 +17,14 @@ export const SANDBOX_DOCUMENT = `query Profile {
       name
       category
     }
+    experience {
+      company
+      position
+      period
+      achievements {
+        text
+      }
+    }
   }
 }
 `;

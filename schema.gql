@@ -2,6 +2,42 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+"""Something accomplished at a place of work."""
+type Achievement {
+  id: ID!
+  text: String!
+}
+
+"""A calendar date in the ISO 8601 format: YYYY-MM-DD."""
+scalar Date
+
+"""A place of work."""
+type Experience {
+  """Achievements at this place of work, in display order."""
+  achievements: [Achievement!]!
+  company: String!
+  companyUrl: String
+
+  """
+  Length in months, counting both the first and the last month. A current job is counted up to the moment of the request.
+  """
+  durationMonths: Int!
+
+  """Null while the job is current."""
+  endDate: Date
+  id: ID!
+
+  """True while the job has no end date."""
+  isCurrent: Boolean!
+
+  """Human-readable period, e.g. "декабрь 2022 — декабрь 2024"."""
+  period: String!
+
+  """Job title."""
+  position: String!
+  startDate: Date!
+}
+
 """Kind of a professional resource a link points to."""
 enum LinkKind {
   EMAIL
@@ -15,6 +51,9 @@ enum LinkKind {
 """The owner of the business card."""
 type Profile {
   description: String!
+
+  """Work experience, newest first."""
+  experience: [Experience!]!
 
   """Short professional title."""
   headline: String!
@@ -39,6 +78,9 @@ type ProfileLink {
 }
 
 type Query {
+  """Work experience, newest first."""
+  experiences: [Experience!]!
+
   """The owner of this business card."""
   profile: Profile!
 

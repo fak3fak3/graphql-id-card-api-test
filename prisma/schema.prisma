@@ -46,8 +46,9 @@ model Profile {
   headline    String
   description String
 
-  links  ProfileLink[]
-  skills Skill[]
+  links      ProfileLink[]
+  skills     Skill[]
+  experience Experience[]
 
   @@map("profiles")
 }
@@ -83,4 +84,39 @@ model Skill {
   /// Covers the only read path: skills of a profile in display order.
   @@index([profileId, position])
   @@map("skills")
+}
+
+/// A place of work. Ordered by start date, so it has no position column.
+model Experience {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  profileId  String    @map("profile_id") @db.Uuid
+  company    String
+  companyUrl String?   @map("company_url")
+  /// Job title.
+  position   String
+  startDate  DateTime  @map("start_date") @db.Date
+  /// NULL means "to the present day".
+  endDate    DateTime? @map("end_date") @db.Date
+
+  profile      Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  achievements Achievement[]
+
+  /// Covers the only read path: experience of a profile, newest first.
+  @@index([profileId, startDate(sort: Desc)])
+  @@map("experiences")
+}
+
+/// Something accomplished at a place of work.
+model Achievement {
+  id           String @id @default(uuid(7)) @db.Uuid
+  experienceId String @map("experience_id") @db.Uuid
+  text         String
+  /// Display order within the experience.
+  position     Int
+
+  experience Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  /// Covers the only read path: achievements of experiences in display order.
+  @@index([experienceId, position])
+  @@map("achievements")
 }

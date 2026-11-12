@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env.validation.js';
+import { ExperienceModule } from './experience/experience.module.js';
 import { GraphQLModule } from './graphql/graphql.module.js';
 import { HealthModule } from './health/health.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -19,6 +20,7 @@ import { SkillsModule } from './skills/skills.module.js';
     HealthModule,
     ProfileModule,
     SkillsModule,
+    ExperienceModule,
   ],
 })
 export class AppModule {}
