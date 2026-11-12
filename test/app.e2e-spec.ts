@@ -20,9 +20,10 @@ describe('Application (e2e)', () => {
     await app.close();
   });
 
-  it('boots and serves HTTP', async () => {
-    // No routes are registered yet: a 404 from the router proves the HTTP
-    // stack is up without tying the smoke test to any feature.
-    await request(app.getHttpServer()).get('/').expect(404);
+  it('GET /health reports that the application is up', async () => {
+    await request(app.getHttpServer())
+      .get('/health')
+      .expect(200)
+      .expect({ status: 'ok' });
   });
 });
