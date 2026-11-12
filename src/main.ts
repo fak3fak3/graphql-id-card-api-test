@@ -1,8 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { Env } from './config/env.validation';
+import { AppModule } from './app.module.js';
+import type { Env } from './config/env.validation.js';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -18,4 +18,4 @@ async function bootstrap(): Promise<void> {
   Logger.log(`Application is listening on port ${port}`, 'Bootstrap');
 }
 
-void bootstrap();
+await bootstrap();
