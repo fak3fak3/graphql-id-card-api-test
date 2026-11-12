@@ -8,5 +8,7 @@ export default defineConfig({
     include: ['test/**/*.e2e-spec.ts'],
     globalSetup: ['./test/global-setup.ts'],
     setupFiles: ['./test/setup-env.ts'],
+    // All files share one test database, so they must not run concurrently.
+    fileParallelism: false,
   },
 });

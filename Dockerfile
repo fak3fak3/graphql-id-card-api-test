@@ -23,20 +23,23 @@ COPY src ./src
 RUN npm run build
 
 # ---- prod-deps: runtime dependencies only ----------------------------------
-# --ignore-scripts skips the `prisma generate` postinstall: the generated
-# client is already compiled into dist by the build stage.
+# Includes the Prisma CLI: the same image applies migrations and runs the seed.
 FROM base AS prod-deps
-COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --ignore-scripts
+COPY package.json package-lock.json prisma.config.ts ./
+COPY prisma ./prisma
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
 # ---- runtime: compiled code + production dependencies, non-root ------------
 FROM base AS runtime
 ENV NODE_ENV=production \
-    PORT=3000
+    PORT=3000 \
+    NPM_CONFIG_UPDATE_NOTIFIER=false
 
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
-COPY --chown=node:node package.json ./
+# Needed by `prisma migrate deploy` / `prisma db seed`, not by the app itself.
+COPY --chown=node:node prisma ./prisma
+COPY --chown=node:node package.json prisma.config.ts ./
 
 USER node
 EXPOSE 3000

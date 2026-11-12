@@ -1,5 +1,7 @@
 # One command from a clean checkout: docker compose up --build
 # Every variable has a working default, so a .env file is optional.
+#
+# Start order: db (healthy) -> migrate (finished successfully) -> app
 
 name: graphql-id-card
 
@@ -30,20 +32,41 @@ services:
       retries: 10
       start_period: 10s
 
-  app:
+  # One-off job: applies pending migrations, then runs the idempotent seed.
+  # A separate service rather than the app's entrypoint, so that restarts of
+  # the app do not re-run it and several app replicas would not race.
+  migrate:
+    image: graphql-id-card-api
     build:
       context: .
       target: runtime
-    restart: unless-stopped
+    restart: 'no'
     init: true
     depends_on:
       db:
         condition: service_healthy
     environment:
+      # Inside the compose network the database is reachable by service name.
+      DATABASE_URL: &database-url postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-id_card}
+    command: ['npm', 'run', 'db:setup']
+    healthcheck:
+      disable: true
+
+  app:
+    # The same image as `migrate`, which is the service that builds it.
+    image: graphql-id-card-api
+    pull_policy: never
+    restart: unless-stopped
+    init: true
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
       NODE_ENV: production
       PORT: 3000
-      # Inside the compose network the database is reachable by service name.
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-id_card}
+      DATABASE_URL: *database-url
     ports:
       - '${APP_PORT:-3000}:3000'
 

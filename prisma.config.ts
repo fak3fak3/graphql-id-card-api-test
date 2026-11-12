@@ -12,6 +12,9 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+    // The seed is compiled together with the application (`npm run build`),
+    // so the production image runs it with plain Node, without a TS runtime.
+    seed: 'node dist/seed/main.js',
   },
   datasource: {
     // Not validated here on purpose: `prisma generate` needs no database and
