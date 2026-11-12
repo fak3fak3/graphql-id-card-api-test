@@ -12,6 +12,9 @@ export const envSchema = z.object({
   DATABASE_URL: z
     .url({ protocol: /^postgres(ql)?$/ })
     .describe('PostgreSQL connection string'),
+  // Apollo Sandbox and schema introspection. On by default: this API is a
+  // public business card and Sandbox is its user interface.
+  GRAPHQL_SANDBOX: z.stringbool().default(true),
 });
 
 export type Env = z.infer<typeof envSchema>;

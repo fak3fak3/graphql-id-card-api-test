@@ -1,0 +1,41 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""Kind of a professional resource a link points to."""
+enum LinkKind {
+  EMAIL
+  GITHUB
+  LINKEDIN
+  OTHER
+  TELEGRAM
+  WEBSITE
+}
+
+"""The owner of the business card."""
+type Profile {
+  description: String!
+
+  """Short professional title."""
+  headline: String!
+  id: ID!
+
+  """Links to professional resources, in display order."""
+  links: [ProfileLink!]!
+  name: String!
+}
+
+"""A link to a professional resource."""
+type ProfileLink {
+  id: ID!
+  kind: LinkKind!
+
+  """Human-readable name of the resource."""
+  label: String!
+  url: String!
+}
+
+type Query {
+  """The owner of this business card."""
+  profile: Profile!
+}

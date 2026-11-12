@@ -10,11 +10,20 @@ describe('validateEnv', () => {
       ...validEnv,
       NODE_ENV: 'development',
       PORT: 3000,
+      GRAPHQL_SANDBOX: true,
     });
   });
 
   it('coerces PORT to a number', () => {
     expect(validateEnv({ ...validEnv, PORT: '8080' }).PORT).toBe(8080);
+  });
+
+  it('parses GRAPHQL_SANDBOX as a boolean', () => {
+    const parse = (value: string) =>
+      validateEnv({ ...validEnv, GRAPHQL_SANDBOX: value }).GRAPHQL_SANDBOX;
+
+    expect(parse('false')).toBe(false);
+    expect(parse('true')).toBe(true);
   });
 
   it('fails when a required variable is missing', () => {

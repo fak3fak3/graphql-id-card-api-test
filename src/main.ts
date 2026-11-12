@@ -15,7 +15,7 @@ async function bootstrap(): Promise<void> {
   const port = config.get('PORT', { infer: true });
 
   await app.listen(port);
-  Logger.log(`Application is listening on port ${port}`, 'Bootstrap');
+  Logger.log(`GraphQL API: http://localhost:${port}/graphql`, 'Bootstrap');
 }
 
 await bootstrap();
