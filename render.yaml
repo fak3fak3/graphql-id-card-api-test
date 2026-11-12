@@ -13,7 +13,9 @@ services:
     # container. Render's equivalent (preDeployCommand) is not available on
     # the free plan, so here they run right before the app starts. Both are
     # idempotent, which makes repeating them on every restart safe.
-    dockerCommand: sh -c "npm run db:setup && exec node dist/main"
+    # An npm script rather than an inline `sh -c "..."`: Render does not
+    # handle quotes in this field the way a shell does.
+    dockerCommand: npm run start:deploy
     healthCheckPath: /health
     autoDeployTrigger: commit
     envVars:
