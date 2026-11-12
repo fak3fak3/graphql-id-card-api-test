@@ -25,6 +25,15 @@ export const SANDBOX_DOCUMENT = `query Profile {
         text
       }
     }
+    projects {
+      name
+      description
+      url
+      repositoryUrl
+      skills {
+        name
+      }
+    }
   }
 }
 `;

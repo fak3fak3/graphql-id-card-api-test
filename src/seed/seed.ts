@@ -4,18 +4,24 @@ import {
   type ExperienceSeed,
 } from './data/experience.js';
 import { profile as defaultProfile, type ProfileSeed } from './data/profile.js';
+import {
+  projects as defaultProjects,
+  type ProjectSeed,
+} from './data/projects.js';
 import { skills as defaultSkills, type SkillSeed } from './data/skills.js';
 
 export interface SeedData {
   profile: ProfileSeed;
   skills: SkillSeed[];
   experience: ExperienceSeed[];
+  projects: ProjectSeed[];
 }
 
 export const seedData: SeedData = {
   profile: defaultProfile,
   skills: defaultSkills,
   experience: defaultExperience,
+  projects: defaultProjects,
 };
 
 type Tx = Prisma.TransactionClient;
@@ -41,6 +47,8 @@ export async function seedDatabase(
     await seedProfile(tx, data.profile);
     await seedSkills(tx, profileId, data.skills);
     await seedExperience(tx, profileId, data.experience);
+    // After skills: projects refer to them by name.
+    await seedProjects(tx, profileId, data.projects, data.skills);
   });
 }
 
@@ -123,5 +131,51 @@ async function seedExperience(
         update: child,
       });
     }
+  }
+}
+
+async function seedProjects(
+  tx: Tx,
+  profileId: string,
+  projects: ProjectSeed[],
+  skills: SkillSeed[],
+): Promise<void> {
+  const skillIdByName = new Map(skills.map((skill) => [skill.name, skill.id]));
+
+  await tx.project.deleteMany({
+    where: { profileId, id: { notIn: idsOf(projects) } },
+  });
+
+  for (const [
+    position,
+    { skills: skillNames, ...project },
+  ] of projects.entries()) {
+    const record = { ...project, position, profileId };
+
+    await tx.project.upsert({
+      where: { id: project.id },
+      create: record,
+      update: record,
+    });
+
+    const skillIds = skillNames.map((name) => {
+      const skillId = skillIdByName.get(name);
+
+      if (!skillId) {
+        throw new Error(
+          `Project "${project.name}" refers to an unknown skill "${name}"`,
+        );
+      }
+
+      return skillId;
+    });
+
+    await tx.projectSkill.deleteMany({
+      where: { projectId: project.id, skillId: { notIn: skillIds } },
+    });
+    await tx.projectSkill.createMany({
+      data: skillIds.map((skillId) => ({ projectId: project.id, skillId })),
+      skipDuplicates: true,
+    });
   }
 }

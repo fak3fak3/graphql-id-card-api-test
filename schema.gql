@@ -63,6 +63,9 @@ type Profile {
   links: [ProfileLink!]!
   name: String!
 
+  """Projects, in display order."""
+  projects: [Project!]!
+
   """Skills, in display order."""
   skills: [Skill!]!
 }
@@ -77,12 +80,31 @@ type ProfileLink {
   url: String!
 }
 
+"""Something the profile owner has built."""
+type Project {
+  description: String!
+  id: ID!
+  name: String!
+
+  """Source code, if it is public."""
+  repositoryUrl: String
+
+  """Skills the project was built with."""
+  skills: [Skill!]!
+
+  """Public address of the project, if it has one."""
+  url: String
+}
+
 type Query {
   """Work experience, newest first."""
   experiences: [Experience!]!
 
   """The owner of this business card."""
   profile: Profile!
+
+  """All projects, in display order."""
+  projects: [Project!]!
 
   """All skills, in display order."""
   skills: [Skill!]!
@@ -93,6 +115,9 @@ type Skill {
   category: SkillCategory!
   id: ID!
   name: String!
+
+  """Projects in which the skill was used."""
+  projects: [Project!]!
 }
 
 """Area of expertise a skill belongs to."""

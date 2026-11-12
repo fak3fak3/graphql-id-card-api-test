@@ -84,21 +84,52 @@ describe('GraphQL: number of SQL queries (e2e)', () => {
     expect(tables).toEqual(['profiles', 'experiences', 'achievements']);
   });
 
-  it('serves the whole business card with one query per table', async () => {
+  it('serves the whole business card with a fixed number of queries', async () => {
     const tables = await tablesQueried(`{
       profile {
         name
         links { url }
         skills { name }
         experience { company position achievements { text } }
+        projects { name skills { name } }
       }
     }`);
 
+    // One query per relation; the many-to-many one takes two (link table,
+    // then skills). Nothing here depends on the number of rows.
     expect(tables.sort()).toEqual([
       'achievements',
       'experiences',
       'profile_links',
       'profiles',
+      'project_skills',
+      'projects',
+      'skills',
+      'skills',
+    ]);
+  });
+
+  it('batches the many-to-many relation in both directions', async () => {
+    expect(
+      await tablesQueried('{ projects { name skills { name } } }'),
+    ).toEqual(['projects', 'project_skills', 'skills']);
+
+    expect(
+      await tablesQueried('{ skills { name projects { name } } }'),
+    ).toEqual(['skills', 'project_skills', 'projects']);
+  });
+
+  it('keeps batching through a cycle in the schema', async () => {
+    // skills -> projects -> skills: each level is one batch, whatever its size.
+    const tables = await tablesQueried(
+      '{ skills { projects { skills { name } } } }',
+    );
+
+    expect(tables).toEqual([
+      'skills',
+      'project_skills',
+      'projects',
+      'project_skills',
       'skills',
     ]);
   });

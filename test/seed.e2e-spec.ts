@@ -32,6 +32,15 @@ const job = (n: number, achievements: Array<{ id: string; text: string }>) => ({
   achievements,
 });
 
+const project = (n: number, skills: string[]) => ({
+  id: id(5, n),
+  name: `Project ${n}`,
+  description: 'Description',
+  url: null,
+  repositoryUrl: null,
+  skills,
+});
+
 describe('Database seed (e2e)', () => {
   let prisma: PrismaClient;
 
@@ -43,6 +52,15 @@ describe('Database seed (e2e)', () => {
         experience: {
           orderBy: { startDate: 'desc' },
           include: { achievements: { orderBy: { position: 'asc' } } },
+        },
+        projects: {
+          orderBy: { position: 'asc' },
+          include: {
+            skills: {
+              select: { skill: { select: { name: true } } },
+              orderBy: { skill: { position: 'asc' } },
+            },
+          },
         },
       },
     });
@@ -82,6 +100,9 @@ describe('Database seed (e2e)', () => {
     ).toEqual(
       seedData.experience.map((e) => [e.company, e.achievements.length]),
     );
+    expect(profile?.projects.map((p) => [p.name, p.skills.length])).toEqual(
+      seedData.projects.map((p) => [p.name, p.skills.length]),
+    );
   });
 
   it('is idempotent: a second run changes nothing', async () => {
@@ -101,6 +122,7 @@ describe('Database seed (e2e)', () => {
         job(1, [achievement(1), achievement(2)]),
         job(2, [achievement(3)]),
       ],
+      projects: [project(1, ['Skill 1', 'Skill 2']), project(2, ['Skill 1'])],
     };
     const edited: SeedData = {
       profile: {
@@ -110,6 +132,7 @@ describe('Database seed (e2e)', () => {
       },
       skills: [skill(2)],
       experience: [job(1, [achievement(2)])],
+      projects: [project(1, ['Skill 2'])],
     };
 
     await seedDatabase(prisma, initial);
@@ -133,5 +156,25 @@ describe('Database seed (e2e)', () => {
     ).toEqual([['Company 1', [['Achievement 2', 0]]]]);
     // The removed job took its achievements with it.
     expect(await prisma.achievement.count()).toBe(1);
+    expect(
+      profile?.projects.map((p) => [p.name, p.skills.map((s) => s.skill.name)]),
+    ).toEqual([['Project 1', ['Skill 2']]]);
+    // Links to the removed skill and of the removed project are gone too.
+    expect(await prisma.projectSkill.count()).toBe(1);
+  });
+
+  it('fails and changes nothing when a project names an unknown skill', async () => {
+    await seedDatabase(prisma);
+    const before = await snapshot();
+
+    await expect(
+      seedDatabase(prisma, {
+        ...seedData,
+        profile: { ...seedData.profile, headline: 'Must be rolled back' },
+        projects: [project(1, ['No such skill'])],
+      }),
+    ).rejects.toThrow(/unknown skill "No such skill"/);
+
+    expect(await snapshot()).toEqual(before);
   });
 });

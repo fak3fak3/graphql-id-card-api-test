@@ -49,6 +49,7 @@ model Profile {
   links      ProfileLink[]
   skills     Skill[]
   experience Experience[]
+  projects   Project[]
 
   @@map("profiles")
 }
@@ -79,7 +80,8 @@ model Skill {
   /// Display order within the profile.
   position  Int
 
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile  Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  projects ProjectSkill[]
 
   /// Covers the only read path: skills of a profile in display order.
   @@index([profileId, position])
@@ -119,4 +121,41 @@ model Achievement {
   /// Covers the only read path: achievements of experiences in display order.
   @@index([experienceId, position])
   @@map("achievements")
+}
+
+/// Something the profile owner has built.
+model Project {
+  id            String  @id @default(uuid(7)) @db.Uuid
+  profileId     String  @map("profile_id") @db.Uuid
+  name          String
+  description   String
+  /// Public address of the project, if it has one.
+  url           String?
+  /// Source code, if it is public.
+  repositoryUrl String? @map("repository_url")
+  /// Display order within the profile.
+  position      Int
+
+  profile Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skills  ProjectSkill[]
+
+  /// Covers the only read path: projects of a profile in display order.
+  @@index([profileId, position])
+  @@map("projects")
+}
+
+/// Many-to-many link: which skills a project was built with. An explicit model
+/// rather than Prisma's implicit one, to control table and column names.
+model ProjectSkill {
+  projectId String @map("project_id") @db.Uuid
+  skillId   String @map("skill_id") @db.Uuid
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  skill   Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  /// The primary key serves "skills of a project"...
+  @@id([projectId, skillId])
+  /// ...and this index serves the opposite direction, "projects of a skill".
+  @@index([skillId])
+  @@map("project_skills")
 }
