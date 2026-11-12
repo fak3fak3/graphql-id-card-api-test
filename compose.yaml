@@ -1,0 +1,51 @@
+# One command from a clean checkout: docker compose up --build
+# Every variable has a working default, so a .env file is optional.
+
+name: graphql-id-card
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-id_card}
+    ports:
+      # Published on loopback only, for local development and DB tools.
+      # 5433 by default so it does not clash with a PostgreSQL on the host.
+      - '127.0.0.1:${DB_PORT:-5433}:5432'
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      # pg_isready alone also succeeds during the init phase, when the server
+      # listens only on the unix socket; -h forces a real TCP check.
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      target: runtime
+    restart: unless-stopped
+    init: true
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # Inside the compose network the database is reachable by service name.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-id_card}?schema=public
+    ports:
+      - '${APP_PORT:-3000}:3000'
+
+volumes:
+  db-data:
