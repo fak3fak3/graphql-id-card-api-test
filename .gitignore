@@ -3,6 +3,9 @@ node_modules/
 
 # build output
 dist/
+
+# Prisma Client, generated from prisma/schema.prisma
+src/generated/
 *.tsbuildinfo
 
 # environment

@@ -3,10 +3,17 @@
 # ---- base: one Node version for every stage -------------------------------
 FROM node:24-slim AS base
 WORKDIR /app
+# Prisma's engines link against OpenSSL, which the slim image does not ship.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
 
 # ---- deps: full dependency tree, needed only to compile --------------------
+# The Prisma schema is copied first because `npm ci` runs `prisma generate`
+# (postinstall), which writes the typed client to src/generated.
 FROM base AS deps
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json prisma.config.ts ./
+COPY prisma ./prisma
 RUN --mount=type=cache,target=/root/.npm npm ci
 
 # ---- build: TypeScript -> dist ---------------------------------------------
@@ -16,9 +23,11 @@ COPY src ./src
 RUN npm run build
 
 # ---- prod-deps: runtime dependencies only ----------------------------------
+# --ignore-scripts skips the `prisma generate` postinstall: the generated
+# client is already compiled into dist by the build stage.
 FROM base AS prod-deps
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --ignore-scripts
 
 # ---- runtime: compiled code + production dependencies, non-root ------------
 FROM base AS runtime

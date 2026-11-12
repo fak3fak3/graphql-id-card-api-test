@@ -1,0 +1,58 @@
+// Database schema. Models use camelCase in code and snake_case in PostgreSQL
+// (@map / @@map), so both sides follow their own conventions.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+
+  // Stated explicitly instead of being inferred from tsconfig.json, so the
+  // generated code is identical wherever `prisma generate` runs.
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LinkKind {
+  GITHUB
+  LINKEDIN
+  TELEGRAM
+  EMAIL
+  WEBSITE
+  OTHER
+
+  @@map("link_kind")
+}
+
+/// The owner of the business card. The application serves a single profile,
+/// but nothing in the schema depends on that.
+model Profile {
+  id          String @id @default(uuid(7)) @db.Uuid
+  name        String
+  /// Short professional title shown next to the name.
+  headline    String
+  description String
+
+  links ProfileLink[]
+
+  @@map("profiles")
+}
+
+/// A link to a professional resource (GitHub, LinkedIn, ...).
+model ProfileLink {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  kind      LinkKind
+  label     String
+  url       String
+  /// Display order within the profile.
+  position  Int
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  /// Covers the only read path: links of a profile in display order.
+  @@index([profileId, position])
+  @@map("profile_links")
+}
