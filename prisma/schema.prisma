@@ -26,6 +26,17 @@ enum LinkKind {
   @@map("link_kind")
 }
 
+enum SkillCategory {
+  LANGUAGE
+  FRONTEND
+  BACKEND
+  DATABASE
+  INFRASTRUCTURE
+  TOOLS
+
+  @@map("skill_category")
+}
+
 /// The owner of the business card. The application serves a single profile,
 /// but nothing in the schema depends on that.
 model Profile {
@@ -35,7 +46,8 @@ model Profile {
   headline    String
   description String
 
-  links ProfileLink[]
+  links  ProfileLink[]
+  skills Skill[]
 
   @@map("profiles")
 }
@@ -55,4 +67,20 @@ model ProfileLink {
   /// Covers the only read path: links of a profile in display order.
   @@index([profileId, position])
   @@map("profile_links")
+}
+
+/// A technology or tool the profile owner works with.
+model Skill {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  profileId String        @map("profile_id") @db.Uuid
+  name      String
+  category  SkillCategory
+  /// Display order within the profile.
+  position  Int
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  /// Covers the only read path: skills of a profile in display order.
+  @@index([profileId, position])
+  @@map("skills")
 }

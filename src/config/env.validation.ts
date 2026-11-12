@@ -15,6 +15,9 @@ export const envSchema = z.object({
   // Apollo Sandbox and schema introspection. On by default: this API is a
   // public business card and Sandbox is its user interface.
   GRAPHQL_SANDBOX: z.stringbool().default(true),
+  // Prints every SQL query to the log: the easiest way to see how many
+  // queries a GraphQL operation costs.
+  DATABASE_LOG_QUERIES: z.stringbool().default(false),
 });
 
 export type Env = z.infer<typeof envSchema>;

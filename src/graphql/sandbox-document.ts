@@ -13,6 +13,10 @@ export const SANDBOX_DOCUMENT = `query Profile {
       label
       url
     }
+    skills {
+      name
+      category
+    }
   }
 }
 `;

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { groupBy } from '../graphql/dataloader/group-by.js';
 import type { ProfileLink } from './models/profile-link.model.js';
 import type { Profile } from './models/profile.model.js';
 import { toProfile, toProfileLink } from './profile.mapper.js';
@@ -19,9 +20,18 @@ export class ProfileService {
     return toProfile(record);
   }
 
-  async getLinks(profileId: string): Promise<ProfileLink[]> {
-    const records = await this.repository.findLinksByProfileId(profileId);
+  /** Links of several profiles at once, grouped by profile id. */
+  async getLinksByProfileIds(
+    profileIds: readonly string[],
+  ): Promise<Map<string, ProfileLink[]>> {
+    const records = await this.repository.findLinksByProfileIds(profileIds);
+    const byProfile = groupBy(records, (record) => record.profileId);
 
-    return records.map(toProfileLink);
+    return new Map(
+      [...byProfile].map(([profileId, group]) => [
+        profileId,
+        group.map(toProfileLink),
+      ]),
+    );
   }
 }

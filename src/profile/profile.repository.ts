@@ -15,9 +15,12 @@ export class ProfileRepository {
     return this.prisma.profile.findFirst();
   }
 
-  findLinksByProfileId(profileId: string): Promise<ProfileLinkRecord[]> {
+  /** One query for any number of profiles: the batch behind the DataLoader. */
+  findLinksByProfileIds(
+    profileIds: readonly string[],
+  ): Promise<ProfileLinkRecord[]> {
     return this.prisma.profileLink.findMany({
-      where: { profileId },
+      where: { profileId: { in: [...profileIds] } },
       orderBy: { position: 'asc' },
     });
   }

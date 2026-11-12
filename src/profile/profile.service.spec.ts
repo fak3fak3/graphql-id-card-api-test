@@ -25,7 +25,7 @@ const linkRecord: ProfileLinkRecord = {
 describe('ProfileService', () => {
   const repository = {
     findProfile: vi.fn<ProfileRepository['findProfile']>(),
-    findLinksByProfileId: vi.fn<ProfileRepository['findLinksByProfileId']>(),
+    findLinksByProfileIds: vi.fn<ProfileRepository['findLinksByProfileIds']>(),
   };
   const service = new ProfileService(
     repository as unknown as ProfileRepository,
@@ -49,17 +49,32 @@ describe('ProfileService', () => {
     );
   });
 
-  it('maps links without exposing storage-only fields', async () => {
-    repository.findLinksByProfileId.mockResolvedValue([linkRecord]);
+  it('groups links by profile without exposing storage-only fields', async () => {
+    repository.findLinksByProfileIds.mockResolvedValue([linkRecord]);
 
-    await expect(service.getLinks('profile-1')).resolves.toEqual([
-      {
-        id: 'link-1',
-        kind: 'GITHUB',
-        label: 'GitHub',
-        url: 'https://github.com/jane',
-      },
+    const links = await service.getLinksByProfileIds([
+      'profile-1',
+      'profile-2',
     ]);
-    expect(repository.findLinksByProfileId).toHaveBeenCalledWith('profile-1');
+
+    expect(links).toEqual(
+      new Map([
+        [
+          'profile-1',
+          [
+            {
+              id: 'link-1',
+              kind: 'GITHUB',
+              label: 'GitHub',
+              url: 'https://github.com/jane',
+            },
+          ],
+        ],
+      ]),
+    );
+    expect(repository.findLinksByProfileIds).toHaveBeenCalledWith([
+      'profile-1',
+      'profile-2',
+    ]);
   });
 });

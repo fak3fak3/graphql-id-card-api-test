@@ -7,6 +7,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GraphQLModule as NestGraphQLModule } from '@nestjs/graphql';
 import type { Env } from '../config/env.validation.js';
+import { createGraphQLContext } from './graphql-context.js';
 import { SANDBOX_DOCUMENT } from './sandbox-document.js';
 
 /**
@@ -46,6 +47,8 @@ import { SANDBOX_DOCUMENT } from './sandbox-document.js';
           playground: false,
           introspection: sandbox,
           plugins: [landingPage],
+          // A fresh context per request: this is what scopes DataLoaders.
+          context: createGraphQLContext,
         };
       },
     }),

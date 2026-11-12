@@ -45,6 +45,10 @@ describe('GraphQL: profile (e2e)', () => {
             label
             url
           }
+          skills {
+            name
+            category
+          }
         }
       }`,
     );
@@ -58,6 +62,10 @@ describe('GraphQL: profile (e2e)', () => {
           headline,
           description,
           links: links.map(({ kind, label, url }) => ({ kind, label, url })),
+          skills: seedData.skills.map(({ name, category }) => ({
+            name,
+            category,
+          })),
         },
       },
     });

@@ -1,12 +1,17 @@
 import {
   Injectable,
+  Logger,
   type OnModuleDestroy,
   type OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import type { Env } from '../config/env.validation.js';
-import { PrismaClient } from '../generated/prisma/client.js';
+import { Prisma, PrismaClient } from '../generated/prisma/client.js';
+
+type ClientOptions = Prisma.PrismaClientOptions & {
+  log: [{ emit: 'event'; level: 'query' }];
+};
 
 /**
  * The application's single Prisma Client, bound to the Nest lifecycle.
@@ -14,15 +19,26 @@ import { PrismaClient } from '../generated/prisma/client.js';
  */
 @Injectable()
 export class PrismaService
-  extends PrismaClient
+  extends PrismaClient<ClientOptions, 'query'>
   implements OnModuleInit, OnModuleDestroy
 {
+  private readonly logger = new Logger('Prisma');
+
   constructor(config: ConfigService<Env, true>) {
     super({
       adapter: new PrismaPg({
         connectionString: config.get('DATABASE_URL', { infer: true }),
       }),
+      // Queries are emitted as events rather than printed by Prisma, so they
+      // can go through the Nest logger and be counted in tests.
+      log: [{ emit: 'event', level: 'query' }],
     });
+
+    if (config.get('DATABASE_LOG_QUERIES', { infer: true })) {
+      this.$on('query', (event) => {
+        this.logger.log(`${event.query} — ${event.duration.toFixed(1)}ms`);
+      });
+    }
   }
 
   /**

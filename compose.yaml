@@ -68,6 +68,7 @@ services:
       PORT: 3000
       DATABASE_URL: *database-url
       GRAPHQL_SANDBOX: ${GRAPHQL_SANDBOX:-true}
+      DATABASE_LOG_QUERIES: ${DATABASE_LOG_QUERIES:-false}
     ports:
       - '${APP_PORT:-3000}:3000'
 

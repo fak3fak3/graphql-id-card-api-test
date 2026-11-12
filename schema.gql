@@ -23,6 +23,9 @@ type Profile {
   """Links to professional resources, in display order."""
   links: [ProfileLink!]!
   name: String!
+
+  """Skills, in display order."""
+  skills: [Skill!]!
 }
 
 """A link to a professional resource."""
@@ -38,4 +41,24 @@ type ProfileLink {
 type Query {
   """The owner of this business card."""
   profile: Profile!
+
+  """All skills, in display order."""
+  skills: [Skill!]!
+}
+
+"""A technology or tool the profile owner works with."""
+type Skill {
+  category: SkillCategory!
+  id: ID!
+  name: String!
+}
+
+"""Area of expertise a skill belongs to."""
+enum SkillCategory {
+  BACKEND
+  DATABASE
+  FRONTEND
+  INFRASTRUCTURE
+  LANGUAGE
+  TOOLS
 }
