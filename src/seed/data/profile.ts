@@ -37,5 +37,11 @@ export const profile: ProfileSeed = {
       label: 'GitHub',
       url: 'https://github.com/fak3fak3',
     },
+    {
+      id: '01a1cf8b-3abd-780c-81de-8c06c3e07c39',
+      kind: LinkKind.TELEGRAM,
+      label: 'Telegram',
+      url: 'https://t.me/amirolyubov',
+    },
   ],
 };
