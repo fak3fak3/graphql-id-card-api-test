@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
+import { SANDBOX_DOCUMENT } from '../src/graphql/sandbox-document.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { seedData, seedDatabase } from '../src/seed/seed.js';
 import { executeGraphQL } from './graphql-request.js';
@@ -82,6 +83,16 @@ describe('GraphQL: profile (e2e)', () => {
       .expect(200);
 
     expect(response.text).toContain('embeddable-sandbox');
+  });
+
+  it('opens Sandbox with an operation that is valid for the schema', async () => {
+    const result = await executeGraphQL<{ profile: { name: string } }>(
+      app,
+      SANDBOX_DOCUMENT,
+    );
+
+    expect(result.errors).toBeUndefined();
+    expect(result.data?.profile.name).toBe(seedData.profile.name);
   });
 
   it('allows introspection, which Sandbox relies on', async () => {

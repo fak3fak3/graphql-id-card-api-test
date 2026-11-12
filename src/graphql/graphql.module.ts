@@ -7,6 +7,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GraphQLModule as NestGraphQLModule } from '@nestjs/graphql';
 import type { Env } from '../config/env.validation.js';
+import { SANDBOX_DOCUMENT } from './sandbox-document.js';
 
 /**
  * GraphQL transport: Apollo Server with a code-first schema.
@@ -26,7 +27,10 @@ import type { Env } from '../config/env.validation.js';
         // production. The choice is made explicit and driven by configuration
         // instead, so the Docker image (NODE_ENV=production) still serves it.
         const landingPage: ApolloServerPlugin = sandbox
-          ? ApolloServerPluginLandingPageLocalDefault({ embed: true })
+          ? ApolloServerPluginLandingPageLocalDefault({
+              embed: true,
+              document: SANDBOX_DOCUMENT,
+            })
           : ApolloServerPluginLandingPageDisabled();
 
         return {
