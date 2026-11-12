@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundError } from '../common/errors/domain.error.js';
 import type {
   Profile as ProfileRecord,
   ProfileLink as ProfileLinkRecord,
@@ -41,12 +41,10 @@ describe('ProfileService', () => {
     await expect(service.getProfile()).resolves.toEqual(profileRecord);
   });
 
-  it('throws NotFoundException when the database is not seeded', async () => {
+  it('throws NotFoundError when the database is not seeded', async () => {
     repository.findProfile.mockResolvedValue(null);
 
-    await expect(service.getProfile()).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(service.getProfile()).rejects.toBeInstanceOf(NotFoundError);
   });
 
   it('groups links by profile without exposing storage-only fields', async () => {

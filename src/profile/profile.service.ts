@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { NotFoundError } from '../common/errors/domain.error.js';
 import { groupBy } from '../graphql/dataloader/group-by.js';
 import type { ProfileLink } from './models/profile-link.model.js';
 import type { Profile } from './models/profile.model.js';
@@ -14,7 +15,7 @@ export class ProfileService {
 
     if (!record) {
       // Only possible when the database has not been seeded.
-      throw new NotFoundException('Profile not found');
+      throw new NotFoundError('Profile not found');
     }
 
     return toProfile(record);

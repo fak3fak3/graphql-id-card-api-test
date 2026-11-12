@@ -15,11 +15,13 @@ export interface GraphQLResponse<TData> {
 export async function executeGraphQL<TData>(
   app: INestApplication<App>,
   query: string,
+  /** Apollo answers 400 when the request itself is invalid. */
+  expectedStatus = 200,
 ): Promise<GraphQLResponse<TData>> {
   const response = await request(app.getHttpServer())
     .post('/graphql')
     .send({ query })
-    .expect(200);
+    .expect(expectedStatus);
 
   return response.body as GraphQLResponse<TData>;
 }

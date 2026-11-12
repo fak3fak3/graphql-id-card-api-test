@@ -11,6 +11,7 @@ describe('validateEnv', () => {
       NODE_ENV: 'development',
       PORT: 3000,
       GRAPHQL_SANDBOX: true,
+      GRAPHQL_MAX_DEPTH: 6,
       DATABASE_LOG_QUERIES: false,
     });
   });

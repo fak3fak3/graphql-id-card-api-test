@@ -76,11 +76,16 @@ describe('GraphQL: profile (e2e)', () => {
 
     const result = await executeGraphQL(app, '{ profile { name } }');
 
-    expect(result.data).toBeNull();
-    expect(result.errors).toHaveLength(1);
-    expect(result.errors?.[0]).toMatchObject({
-      message: 'Profile not found',
-      path: ['profile'],
+    expect(result).toEqual({
+      data: null,
+      errors: [
+        {
+          message: 'Profile not found',
+          path: ['profile'],
+          locations: [{ line: 1, column: 3 }],
+          extensions: { code: 'NOT_FOUND' },
+        },
+      ],
     });
   });
 

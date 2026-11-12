@@ -5,10 +5,14 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
 import { ApolloDriver, type ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { APP_FILTER } from '@nestjs/core';
 import { GraphQLModule as NestGraphQLModule } from '@nestjs/graphql';
 import type { Env } from '../config/env.validation.js';
+import { formatGraphQLError } from './errors/format-error.js';
+import { GraphQLExceptionFilter } from './errors/graphql-exception.filter.js';
 import { createGraphQLContext } from './graphql-context.js';
 import { SANDBOX_DOCUMENT } from './sandbox-document.js';
+import { depthLimitRule } from './validation/depth-limit.rule.js';
 
 /**
  * GraphQL transport: Apollo Server with a code-first schema.
@@ -47,11 +51,20 @@ import { SANDBOX_DOCUMENT } from './sandbox-document.js';
           playground: false,
           introspection: sandbox,
           plugins: [landingPage],
+          validationRules: [
+            depthLimitRule(config.get('GRAPHQL_MAX_DEPTH', { infer: true })),
+          ],
+          formatError: formatGraphQLError,
+          // formatError is the only place that shapes errors: Nest must not
+          // rewrite HTTP exceptions first, and Apollo must not attach stacks.
+          autoTransformHttpErrors: false,
+          includeStacktraceInErrorResponses: false,
           // A fresh context per request: this is what scopes DataLoaders.
           context: createGraphQLContext,
         };
       },
     }),
   ],
+  providers: [{ provide: APP_FILTER, useClass: GraphQLExceptionFilter }],
 })
 export class GraphQLModule {}
