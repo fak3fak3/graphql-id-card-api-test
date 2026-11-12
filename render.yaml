@@ -1,0 +1,31 @@
+# Render Blueprint: the public demo of the API.
+# Dashboard -> New -> Blueprint -> pick this repository.
+
+services:
+  - type: web
+    name: graphql-id-card-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # compose.yaml runs migrations and the seed in a separate one-off
+    # container. Render's equivalent (preDeployCommand) is not available on
+    # the free plan, so here they run right before the app starts. Both are
+    # idempotent, which makes repeating them on every restart safe.
+    dockerCommand: sh -c "npm run db:setup && exec node dist/main"
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: graphql-id-card-db
+          property: connectionString
+
+databases:
+  - name: graphql-id-card-db
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: '18'
+    databaseName: id_card
+    user: id_card
